@@ -6,6 +6,8 @@ from PIL import Image, ImageTk
 from Clicker import Clicker
 import subprocess
 from functools import partial
+from auto_matcher import AutoMatcher
+
 
 class GUI:
     output_images = {}
@@ -71,7 +73,7 @@ class GUI:
                 self.already_added_content = True
             self.folder_selected.set(True)
             self.start_clicker_button.config(state=tk.NORMAL)
-            #self.start_auto_button.config(state=tk.NORMAL)
+            self.start_auto_button.config(state=tk.NORMAL)
 
     def add_camera_selection(self):
         camera_frame = tk.Frame(self.root)
@@ -178,7 +180,7 @@ class GUI:
         self.y_px.config(state=tk.DISABLED)
         self.x_mm.config(state=tk.DISABLED)
         self.y_mm.config(state=tk.DISABLED)
-    
+
     def camera_selection_cognex(self):
         self.x_px.config(state=tk.NORMAL)
         self.y_px.config(state=tk.NORMAL)
@@ -197,45 +199,63 @@ class GUI:
         self.x_mm.config(state=tk.DISABLED)
         self.y_mm.config(state=tk.DISABLED)
 
-    def start_clicker(self):
+    def disable_selections(self):
         self.camera_cognex.config(state="disabled")
         self.camera_basler.config(state="disabled")
         self.camera_custom.config(state="disabled")
         self.open_folder_button.config(state=tk.DISABLED)
         self.start_clicker_button.config(state=tk.DISABLED)
 
+    def enable_selections(self):
+        self.camera_cognex.config(state="normal")
+        self.camera_basler.config(state="normal")
+        self.camera_custom.config(state="normal")
+        self.open_folder_button.config(state=tk.NORMAL)
+        self.start_clicker_button.config(state=tk.NORMAL)
+
+    def start_clicker(self):
+        self.disable_selections()
+
         if self.limit_entry.get().isdigit() and self.height_entry.get().isdigit():
-            limit = self.limit_entry.get()
-            height = self.height_entry.get()
-            camera = self.camera_selected.get()
-            x_px = self.x_px.get()
-            y_px = self.y_px.get()
-            x_mm = self.x_mm.get()
-            y_mm = self.y_mm.get()
-
-            process = Clicker(self.path, x_px, y_px, x_mm, y_mm, int(limit), int(height))
-            success, self.img_path, title = process.run_clicker()
-
-            self.open_folder_button.config(state=tk.NORMAL)
-            self.start_clicker_button.config(state=tk.NORMAL)
+            process = Clicker(self.path,
+                              self.x_px.get(),
+                              self.y_px.get(),
+                              self.x_mm.get(),
+                              self.y_mm.get(),
+                              int(self.limit_entry.get()),
+                              int(self.height_entry.get()))
+            success, img_path, title = process.run_clicker()
 
             if success and not self.already_added_graph:
                 self.already_added_graph = True
                 self.add_graph()
-
             if success:
-                self.output_images[title] = self.img_path
-
+                self.output_images[title] = img_path
                 self.add_button(title)
 
-                self.camera_cognex.config(state="normal")
-                self.camera_basler.config(state="normal")
-                self.camera_custom.config(state="normal")
-                self.open_folder_button.config(state=tk.NORMAL)
-                self.start_clicker_button.config(state=tk.NORMAL)
+        self.enable_selections()
 
     def start_auto(self):
-        pass
+        self.disable_selections()
+
+        if self.limit_entry.get().isdigit() and self.height_entry.get().isdigit():
+            process = AutoMatcher(self.path,
+                                  self.x_px.get(),
+                                  self.y_px.get(),
+                                  self.x_mm.get(),
+                                  self.y_mm.get(),
+                                  int(self.limit_entry.get()),
+                                  int(self.height_entry.get()))
+            success, img_path, title = process.run_bf_matcher()
+
+            if success and not self.already_added_graph:
+                self.already_added_graph = True
+                self.add_graph()
+            if success:
+                self.output_images[title] = img_path
+                self.add_button(title)
+
+        self.enable_selections()
 
     def add_graph(self):
         image_placeholder = PhotoImage()
