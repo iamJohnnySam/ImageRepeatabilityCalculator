@@ -18,7 +18,7 @@ class Clicker:
         else:
             self.camera = 1
 
-    def mouse_callback(self, event, x, y):
+    def mouse_callback(self, event, x, y, a, b):
         if event == cv.EVENT_LBUTTONUP:
             print("Mouse clicked at X:", x, "Y:", y)
             self.x_arr = np.append(self.x_arr, x)
@@ -26,7 +26,7 @@ class Clicker:
 
     def run_clicker(self):
         for filename in os.listdir(self.directory):
-            f = os.path.join(self.directory, filename)
+            f = os.path.join(self.directory, filename).replace("\\", "/")
             if os.path.isfile(f):
                 img = cv.imread(f)
                 dim = (int(self.h * img.shape[1] / img.shape[0]), self.h)
@@ -70,8 +70,8 @@ class Clicker:
         print("Min X: ", np.min(x_img), " | Max X: ", np.max(x_img), " | Pk-Pk X: ", np.max(x_img) - np.min(x_img))
         print("Min Y: ", np.min(y_img), " | Max Y: ", np.max(y_img), " | Pk-Pk Y: ", np.max(y_img) - np.min(y_img))
 
-        usl = self.limit/1000
-        lsl = -self.limit/1000
+        usl = self.limit / 1000
+        lsl = -self.limit / 1000
 
         cpi_x = (np.mean(x_set) - lsl) / (3 * np.std(x_set))
         cpu_x = (usl - np.mean(x_set)) / (3 * np.std(x_set))
@@ -106,7 +106,5 @@ class Clicker:
         fig_path = os.path.basename(self.directory) + '.png'
         plt.savefig(fig_path, dpi=100)
         plt.show()
-
-
 
         return True, os.path.join(os.getcwd(), fig_path)

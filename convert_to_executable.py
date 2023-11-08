@@ -1,3 +1,3 @@
 import os
 
-os.system("pyinstaller -F main.py")
+os.system("pyinstaller main.spec")
