@@ -5,18 +5,18 @@ import cv2 as cv
 
 
 class Clicker:
-    def __init__(self, directory, camera, limit=150, window_size=1700):
+    images = []
+
+    def __init__(self, directory, img_w_px, img_h_px, img_w_mm, img_h_mm, limit=150, window_size=1700):
         self.directory = directory
         self.x_arr = np.array([0])
         self.y_arr = np.array([0])
         self.h = window_size
         self.limit = limit
-        if camera == "Basler":
-            self.camera = 0
-        elif camera == "Cognex":
-            self.camera = 1
-        else:
-            self.camera = 1
+        self.img_w_px = int(img_w_px)
+        self.img_h_px = int(img_h_px)
+        self.img_w_mm = float(img_w_mm)
+        self.img_h_mm = float(img_h_mm)
 
     def mouse_callback(self, event, x, y, a, b):
         if event == cv.EVENT_LBUTTONUP:
@@ -38,37 +38,36 @@ class Clicker:
                 cv.imshow(f, img)
                 cv.waitKey(0)
                 cv.destroyAllWindows()
+                self.images.append(filename)
 
         x_arr = np.delete(self.x_arr, 0)
         y_arr = np.delete(self.y_arr, 0)
 
-        if self.camera == 0:
-            img_w_px = 4096
-            img_h_px = 3000
-            img_w_mm = 2.355
-            img_h_mm = 1.725
-        elif self.camera == 1:
-            img_w_px = 1024
-            img_h_px = 768
-            img_w_mm = 31.127
-            img_h_mm = 23.346
-        else:
-            img_w_px = 0
-            img_h_px = 0
-            img_w_mm = 0
-            img_h_mm = 0
+        img_w_spx = self.img_w_px * self.h / self.img_h_px
+        img_h_spx = self.img_h_px
 
-        img_w_spx = img_w_px * self.h / img_h_px
-        img_h_spx = img_h_px
+        x_img = x_arr * self.img_w_mm / img_w_spx
+        y_img = y_arr * self.img_h_mm / img_h_spx
 
-        x_img = x_arr * img_w_mm / img_w_spx
-        y_img = y_arr * img_h_mm / img_h_spx
+        if x_img.size == 0:
+            return False, "", ""
 
         x_set = x_img - np.mean(x_img)
         y_set = y_img - np.mean(y_img)
 
-        print("Min X: ", np.min(x_img), " | Max X: ", np.max(x_img), " | Pk-Pk X: ", np.max(x_img) - np.min(x_img))
-        print("Min Y: ", np.min(y_img), " | Max Y: ", np.max(y_img), " | Pk-Pk Y: ", np.max(y_img) - np.min(y_img))
+        try:
+            print("Min X: ", np.min(x_img), " | Max X: ", np.max(x_img), " | Pk-Pk X: ", np.max(x_img) - np.min(x_img))
+            print("Min Y: ", np.min(y_img), " | Max Y: ", np.max(y_img), " | Pk-Pk Y: ", np.max(y_img) - np.min(y_img))
+            print()
+            print("images")
+            print(self.images)
+            print("X")
+            print(x_img)
+            print()
+            print("Y")
+            print(y_img)
+        except ValueError:
+            return False, "", ""
 
         usl = self.limit / 1000
         lsl = -self.limit / 1000
@@ -107,4 +106,4 @@ class Clicker:
         plt.savefig(fig_path, dpi=100)
         plt.show()
 
-        return True, os.path.join(os.getcwd(), fig_path)
+        return True, os.path.join(os.getcwd(), fig_path), os.path.basename(self.directory)
