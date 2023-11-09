@@ -8,7 +8,23 @@ import subprocess
 from functools import partial
 from auto_matcher import AutoMatcher
 from template_matcher import TemplateMatcher
-from tkinter import messagebox
+
+
+def open_directory():
+    current_directory = os.getcwd()
+    if os.name == 'nt':
+        # On Windows, use the 'explorer' command
+        subprocess.Popen(['explorer', current_directory], shell=True)
+    else:
+        # On Linux, use the 'xdg-open' command
+        subprocess.Popen(['xdg-open', current_directory])
+
+
+def on_validate(p):
+    # This function is called when the Entry is being edited
+    if p == "" or p.replace(".", "", 1).isdigit():
+        return True
+    return False
 
 
 class GUI:
@@ -78,12 +94,6 @@ class GUI:
         # Wait for the info_popup window to be closed
         self.root.wait_window(info_popup)
 
-    def on_validate(self, P):
-        # This function is called when the Entry is being edited
-        if P == "" or P.replace(".", "", 1).isdigit():
-            return True
-        return False
-
     def open_folder_dialog(self):
         folder_path = filedialog.askdirectory()
         self.path = folder_path
@@ -127,7 +137,7 @@ class GUI:
         y_mm = tk.Label(fov_label_frame, text="FoV Y(mm)", width=w)
         y_mm.pack(side=tk.LEFT)
 
-        validate_func = self.root.register(self.on_validate)
+        validate_func = self.root.register(on_validate)
 
         fov_frame = tk.Frame(self.root)
         fov_frame.pack()
@@ -246,7 +256,6 @@ class GUI:
 
     def start_clicker(self):
         self.disable_selections()
-
         msg = "Using your mouse, click on a feature you can continuously identify. Press any key on your keyboard to" \
               "go to the next photo. Once you have completed all photos in your folder your graph will be generated."
         self.show_info_popup(msg)
@@ -260,19 +269,11 @@ class GUI:
                               int(self.limit_entry.get()),
                               int(self.height_entry.get()))
             success, img_path, title = process.run_clicker()
-
-            if success and not self.already_added_graph:
-                self.already_added_graph = True
-                self.add_graph()
-            if success:
-                self.output_images[title] = img_path
-                self.add_button(title)
-
+            self.add_graph_button(success, img_path, title)
         self.enable_selections()
 
     def start_tm_auto(self):
         self.disable_selections()
-
         msg = "The first photo will open. Use your mouse to drag and select a suitable template to match other photos" \
               ". Once completed press any key on your keyboard. The selected template will open. Press any key on " \
               "your keyboard to continue template matching process."
@@ -287,19 +288,14 @@ class GUI:
                                       int(self.limit_entry.get()),
                                       int(self.height_entry.get()))
             success, img_path, title = process.run_matcher()
-
-            if success and not self.already_added_graph:
-                self.already_added_graph = True
-                self.add_graph()
-            if success:
-                self.output_images[title] = img_path
-                self.add_button(title)
-
+            self.add_graph_button(success, img_path, title)
         self.enable_selections()
 
     def start_auto(self):
         self.disable_selections()
-
+        msg = "An image processed photo will be opened to show the template that is used to brute force match" \
+              "features to the rest of the photos. Press any key on your keyboard to continue."
+        self.show_info_popup(msg)
         if self.limit_entry.get().isdigit() and self.height_entry.get().isdigit():
             process = AutoMatcher(self.path,
                                   self.x_px.get(),
@@ -309,15 +305,16 @@ class GUI:
                                   int(self.limit_entry.get()),
                                   int(self.height_entry.get()))
             success, img_path, title = process.run_bf_matcher()
-
-            if success and not self.already_added_graph:
-                self.already_added_graph = True
-                self.add_graph()
-            if success:
-                self.output_images[title] = img_path
-                self.add_button(title)
-
+            self.add_graph_button(success, img_path, title)
         self.enable_selections()
+
+    def add_graph_button(self, success, img_path, title):
+        if success and not self.already_added_graph:
+            self.already_added_graph = True
+            self.add_graph()
+        if success and title not in self.output_images.keys():
+            self.output_images[title] = img_path
+            self.add_button(title)
 
     def add_graph(self):
         image_placeholder = PhotoImage()
@@ -325,10 +322,10 @@ class GUI:
         self.image_label = tk.Label(self.root, image=image_placeholder)
         self.image_label.pack()
 
-        self.image_button_frame = tk.Frame(self.root)
+        self.image_button_frame = tk.Frame(self.root, width=750)
         self.image_button_frame.pack()
 
-        add_open = tk.Button(self.root, text="Open Output Folder", command=self.open_directory)
+        add_open = tk.Button(self.root, text="Open Output Folder", command=open_directory)
         add_open.pack()
 
     def add_button(self, title):
@@ -340,15 +337,6 @@ class GUI:
         image_path = self.output_images[title]
         if image_path:
             self.resize_and_display_image(image_path)
-
-    def open_directory(self):
-        current_directory = os.getcwd()
-        if os.name == 'nt':
-            # On Windows, use the 'explorer' command
-            subprocess.Popen(['explorer', current_directory], shell=True)
-        else:
-            # On Linux, use the 'xdg-open' command
-            subprocess.Popen(['xdg-open', current_directory])
 
     def resize_and_display_image(self, image_path):
         image = Image.open(image_path)
