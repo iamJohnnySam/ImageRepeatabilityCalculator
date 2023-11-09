@@ -71,4 +71,3 @@ class Clicker:
 
         success, path, = grapher.grapher(x_set, y_set, self.limit, self.directory, "_c")
         return success, path, os.path.basename(self.directory) + "_c"
-
