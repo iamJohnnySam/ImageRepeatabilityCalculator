@@ -7,12 +7,15 @@ from Clicker import Clicker
 import subprocess
 from functools import partial
 from auto_matcher import AutoMatcher
+from template_matcher import TemplateMatcher
+from tkinter import messagebox
 
 
 class GUI:
     output_images = {}
 
     def __init__(self):
+        self.start_tm_auto_button = None
         self.already_added_content = False
         self.image_button_frame = None
         self.x_px = None
@@ -41,12 +44,16 @@ class GUI:
         heading_label = tk.Label(self.root, text="Image Repeatability Calculator", font=("Helvetica", 16))
         heading_label.pack()
 
-        instructions_label = tk.Label(self.root, text="Select folder which has photos")
-        instructions_label.pack()
+        folder_select_frame = tk.Frame(self.root)
+        folder_select_frame.pack()
 
-        self.open_folder_button = tk.Button(self.root, text="Select Folder", width=20, command=self.open_folder_dialog,
+        instructions_label = tk.Label(folder_select_frame, text="Select folder which has photos")
+        instructions_label.pack(side=tk.LEFT)
+
+        self.open_folder_button = tk.Button(folder_select_frame, text="Select Folder", width=20,
+                                            command=self.open_folder_dialog,
                                             state=tk.NORMAL)
-        self.open_folder_button.pack()
+        self.open_folder_button.pack(side=tk.RIGHT)
 
         self.selected_folder_label = tk.Label(self.root, text="Selected Folder: ")
         self.selected_folder_label.pack()
@@ -56,6 +63,20 @@ class GUI:
 
         gap_label = tk.Label(self.root, text="")
         gap_label.pack()
+
+    def show_info_popup(self, msg):
+        info_popup = tk.Toplevel(self.root)
+        info_popup.title("How to Use")
+        info_popup.geometry("400x200")
+
+        message_label = tk.Label(info_popup, text=msg, wraplength=350, justify=tk.LEFT)
+        message_label.pack(padx=10, pady=10)
+
+        ok_button = tk.Button(info_popup, text="OK", command=info_popup.destroy, width=20)
+        ok_button.pack(side=tk.BOTTOM, pady=10)
+
+        # Wait for the info_popup window to be closed
+        self.root.wait_window(info_popup)
 
     def on_validate(self, P):
         # This function is called when the Entry is being edited
@@ -74,6 +95,7 @@ class GUI:
             self.folder_selected.set(True)
             self.start_clicker_button.config(state=tk.NORMAL)
             self.start_auto_button.config(state=tk.NORMAL)
+            self.start_tm_auto_button.config(state=tk.NORMAL)
 
     def add_camera_selection(self):
         camera_frame = tk.Frame(self.root)
@@ -126,26 +148,23 @@ class GUI:
         gap_label = tk.Label(self.root, text="")
         gap_label.pack()
 
-        limit_label = tk.Label(self.root, text="Enter Limit (in microns):")
-        limit_label.pack()
-        self.limit_entry = tk.Entry(self.root, width=15, validate="key", validatecommand=(validate_func, "%P"))
+        limit_frame = tk.Frame(self.root)
+        limit_frame.pack()
+
+        limit_label = tk.Label(limit_frame, text="Enter Given Control Limit (microns): ")
+        limit_label.pack(side=tk.LEFT)
+        self.limit_entry = tk.Entry(limit_frame, width=15, validate="key", validatecommand=(validate_func, "%P"))
         self.limit_entry.insert(0, "150")
-        self.limit_entry.pack()
+        self.limit_entry.pack(side=tk.LEFT)
 
-        limit_label = tk.Label(self.root, text="Enter Image height you are comfortable with (in pixels):")
-        limit_label.pack()
-        self.height_entry = tk.Entry(self.root, width=15, validate="key", validatecommand=(validate_func, "%P"))
+        height_frame = tk.Frame(self.root)
+        height_frame.pack()
+
+        limit_label = tk.Label(height_frame, text="Enter Display Image height (pixels): ")
+        limit_label.pack(side=tk.LEFT)
+        self.height_entry = tk.Entry(height_frame, width=15, validate="key", validatecommand=(validate_func, "%P"))
         self.height_entry.insert(0, "1700")
-        self.height_entry.pack()
-
-        gap_label = tk.Label(self.root, text="")
-        gap_label.pack()
-        instructions_label = tk.Label(self.root, wraplength=700, text="Once you click the manual start button below an "
-                                                                      "image will open. Using your mouse click on a "
-                                                                      "feature you can continuously identify. Press "
-                                                                      "any key on your keyboard to go to the next "
-                                                                      "photo. Once done your graph will open")
-        instructions_label.pack()
+        self.height_entry.pack(side=tk.LEFT)
 
         button_frame = tk.Frame(self.root)
         button_frame.pack()
@@ -153,9 +172,12 @@ class GUI:
         self.start_clicker_button = tk.Button(button_frame, text="Start Manual Clicker", command=self.start_clicker,
                                               width=20, state=tk.DISABLED)
         self.start_clicker_button.pack(side=tk.LEFT)
-        self.start_auto_button = tk.Button(button_frame, text="Start Auto Process", command=self.start_auto,
+        self.start_auto_button = tk.Button(button_frame, text="Start BF Matcher", command=self.start_auto,
                                            width=20, state=tk.DISABLED)
         self.start_auto_button.pack(side=tk.LEFT)
+        self.start_tm_auto_button = tk.Button(button_frame, text="Start Template Matcher", command=self.start_tm_auto,
+                                              width=20, state=tk.DISABLED)
+        self.start_tm_auto_button.pack(side=tk.LEFT)
 
     def camera_selection_custom(self):
         self.x_px.config(state=tk.NORMAL)
@@ -205,6 +227,10 @@ class GUI:
         self.camera_custom.config(state="disabled")
         self.open_folder_button.config(state=tk.DISABLED)
         self.start_clicker_button.config(state=tk.DISABLED)
+        self.x_px.config(state=tk.DISABLED)
+        self.y_px.config(state=tk.DISABLED)
+        self.x_mm.config(state=tk.DISABLED)
+        self.y_mm.config(state=tk.DISABLED)
 
     def enable_selections(self):
         self.camera_cognex.config(state="normal")
@@ -212,9 +238,18 @@ class GUI:
         self.camera_custom.config(state="normal")
         self.open_folder_button.config(state=tk.NORMAL)
         self.start_clicker_button.config(state=tk.NORMAL)
+        if self.camera_selected.get() == "Custom":
+            self.x_px.config(state=tk.NORMAL)
+            self.y_px.config(state=tk.NORMAL)
+            self.x_mm.config(state=tk.NORMAL)
+            self.y_mm.config(state=tk.NORMAL)
 
     def start_clicker(self):
         self.disable_selections()
+
+        msg = "Using your mouse, click on a feature you can continuously identify. Press any key on your keyboard to" \
+              "go to the next photo. Once you have completed all photos in your folder your graph will be generated."
+        self.show_info_popup(msg)
 
         if self.limit_entry.get().isdigit() and self.height_entry.get().isdigit():
             process = Clicker(self.path,
@@ -225,6 +260,33 @@ class GUI:
                               int(self.limit_entry.get()),
                               int(self.height_entry.get()))
             success, img_path, title = process.run_clicker()
+
+            if success and not self.already_added_graph:
+                self.already_added_graph = True
+                self.add_graph()
+            if success:
+                self.output_images[title] = img_path
+                self.add_button(title)
+
+        self.enable_selections()
+
+    def start_tm_auto(self):
+        self.disable_selections()
+
+        msg = "The first photo will open. Use your mouse to drag and select a suitable template to match other photos" \
+              ". Once completed press any key on your keyboard. The selected template will open. Press any key on " \
+              "your keyboard to continue template matching process."
+        self.show_info_popup(msg)
+
+        if self.limit_entry.get().isdigit() and self.height_entry.get().isdigit():
+            process = TemplateMatcher(self.path,
+                                      self.x_px.get(),
+                                      self.y_px.get(),
+                                      self.x_mm.get(),
+                                      self.y_mm.get(),
+                                      int(self.limit_entry.get()),
+                                      int(self.height_entry.get()))
+            success, img_path, title = process.run_matcher()
 
             if success and not self.already_added_graph:
                 self.already_added_graph = True

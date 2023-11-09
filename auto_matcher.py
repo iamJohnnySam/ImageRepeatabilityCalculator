@@ -24,11 +24,19 @@ class AutoMatcher:
         for filename in os.listdir(self.directory):
             f = os.path.join(self.directory, filename).replace("\\", "/")
             if os.path.isfile(f):
+                img = cv2.imread(f, cv2.IMREAD_GRAYSCALE)
+                img = cv2.Canny(img, 100, 250)
+
                 if not self.ref_image_take:
-                    reference_image = cv2.imread(f, cv2.IMREAD_GRAYSCALE)
+                    reference_image = img
+                    cv2.namedWindow(f)
+                    cv2.setWindowProperty(f, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_NORMAL)
+                    cv2.imshow(f, reference_image)
+                    cv2.waitKey(0)
+                    cv2.destroyAllWindows()
                     self.ref_image_take = True
                 else:
-                    image = cv2.imread(f, cv2.IMREAD_GRAYSCALE)
+                    image = img
                     result = self.calculate_offset(reference_image, image)
                     if result is not None:
                         x_offset, y_offset = result
@@ -36,14 +44,14 @@ class AutoMatcher:
                         self.x_arr = np.append(self.x_arr, x_offset)
                         self.y_arr = np.append(self.y_arr, y_offset)
 
-        x_arr = np.delete(self.x_arr, 0)
-        y_arr = np.delete(self.y_arr, 0)
+        self.x_arr = np.delete(self.x_arr, 0)
+        self.y_arr = np.delete(self.y_arr, 0)
 
         img_w_spx = self.img_w_px * self.h / self.img_h_px
         img_h_spx = self.img_h_px
 
-        x_img = x_arr * self.img_w_mm / img_w_spx
-        y_img = y_arr * self.img_h_mm / img_h_spx
+        x_img = self.x_arr * self.img_w_mm / img_w_spx
+        y_img = self.y_arr * self.img_h_mm / img_h_spx
 
         success, path, = grapher.grapher(x_img, y_img, self.limit, self.directory, "_bf")
         return success, path, os.path.basename(self.directory) + "_bf"
