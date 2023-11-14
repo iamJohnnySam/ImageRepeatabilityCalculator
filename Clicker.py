@@ -12,6 +12,8 @@ class Clicker:
     coordinates = {}
 
     def __init__(self, directory, img_w_px, img_h_px, img_w_mm, img_h_mm, limit=150, window_size=1700):
+        self.x_set = None
+        self.y_set = None
         self.filename = "None"
         self.directory = directory
         self.h = window_size
@@ -20,6 +22,7 @@ class Clicker:
         self.img_h_px = int(img_h_px)
         self.img_w_mm = float(img_w_mm)
         self.img_h_mm = float(img_h_mm)
+
 
     def mouse_callback(self, event, x, y, a, b):
         if event == cv.EVENT_LBUTTONUP:
@@ -58,16 +61,16 @@ class Clicker:
         y_img = y_arr * self.img_h_mm / img_h_spx
 
         if x_img.size == 0:
-            return False, "", ""
+            return False, "", "", None, None
 
-        x_set = x_img - np.mean(x_img)
-        y_set = y_img - np.mean(y_img)
+        self.x_set = x_img - np.mean(x_img)
+        self.y_set = y_img - np.mean(y_img)
 
         try:
             print("Min X: ", np.min(x_img), " | Max X: ", np.max(x_img), " | Pk-Pk X: ", np.max(x_img) - np.min(x_img))
             print("Min Y: ", np.min(y_img), " | Max Y: ", np.max(y_img), " | Pk-Pk Y: ", np.max(y_img) - np.min(y_img))
         except ValueError:
-            return False, "", ""
+            return False, "", "", None, None
 
-        success, path, = grapher.grapher(x_set, y_set, self.limit, self.directory, "_c")
-        return success, path, os.path.basename(self.directory) + "_c"
+        success, path, = grapher.grapher(self.x_set, self.y_set, self.limit, self.directory, "_c")
+        return success, path, os.path.basename(self.directory) + "_c", self.x_set, self.y_set

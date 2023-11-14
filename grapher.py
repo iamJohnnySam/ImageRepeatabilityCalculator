@@ -34,8 +34,11 @@ def grapher(x_set, y_set, limit, directory, end):
     plt.xlabel("Iterations")
     plt.ylabel("Deviation in mm")
     plt.legend(loc="upper right")
-    plt.text(1, usl, "Cpk in X: " + str(min(cpi_x, cpu_x)), fontsize=12)
-    plt.text(1, usl - 0.01, "Cpk in Y: " + str(min(cpi_y, cpu_y)), fontsize=12)
+    plt.text(0.5, usl, "Cpk in X: " + str(round(min(cpi_x, cpu_x), 3)), fontsize=12)
+    plt.text(0.5, usl - 0.01, "Cpk in Y: " + str(round(min(cpi_y, cpu_y), 3)), fontsize=12)
+
+    plt.text(0.5, 3 * np.std(x_set), "3σ in X: " + str(round(3 * np.std(x_set), 3)), fontsize=12)
+    plt.text(0.5, 3 * np.std(y_set), "3σ in Y: " + str(round(3 * np.std(y_set), 3)), fontsize=12)
 
     fig_path = os.path.basename(directory) + end + '.png'
     plt.savefig(fig_path, dpi=100)

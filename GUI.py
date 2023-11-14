@@ -2,7 +2,11 @@ import os
 import tkinter as tk
 from tkinter import filedialog
 from tkinter import PhotoImage
+
+import numpy as np
 from PIL import Image, ImageTk
+from matplotlib import pyplot as plt
+
 from Clicker import Clicker
 import subprocess
 from functools import partial
@@ -29,6 +33,8 @@ def on_validate(p):
 
 class GUI:
     output_images = {}
+    output_x = {}
+    output_y = {}
 
     def __init__(self):
         self.start_tm_auto_button = None
@@ -208,6 +214,9 @@ class GUI:
         self.y_px.insert(0, "3000")
         self.x_mm.insert(0, "2.355")
         self.y_mm.insert(0, "1.725")
+
+        self.height_entry.delete(0, tk.END)
+        self.height_entry.insert(0, "1600")
         self.x_px.config(state=tk.DISABLED)
         self.y_px.config(state=tk.DISABLED)
         self.x_mm.config(state=tk.DISABLED)
@@ -226,6 +235,9 @@ class GUI:
         self.y_px.insert(0, "768")
         self.x_mm.insert(0, "31.127")
         self.y_mm.insert(0, "23.346")
+
+        self.height_entry.delete(0, tk.END)
+        self.height_entry.insert(0, "1024")
         self.x_px.config(state=tk.DISABLED)
         self.y_px.config(state=tk.DISABLED)
         self.x_mm.config(state=tk.DISABLED)
@@ -268,8 +280,8 @@ class GUI:
                               self.y_mm.get(),
                               int(self.limit_entry.get()),
                               int(self.height_entry.get()))
-            success, img_path, title = process.run_clicker()
-            self.add_graph_button(success, img_path, title)
+            success, img_path, title, x, y = process.run_clicker()
+            self.add_graph_button(success, img_path, title, x, y)
         self.enable_selections()
 
     def start_tm_auto(self):
@@ -287,8 +299,8 @@ class GUI:
                                       self.y_mm.get(),
                                       int(self.limit_entry.get()),
                                       int(self.height_entry.get()))
-            success, img_path, title = process.run_matcher()
-            self.add_graph_button(success, img_path, title)
+            success, img_path, title, x, y = process.run_matcher()
+            self.add_graph_button(success, img_path, title, x, y)
         self.enable_selections()
 
     def start_auto(self):
@@ -304,16 +316,18 @@ class GUI:
                                   self.y_mm.get(),
                                   int(self.limit_entry.get()),
                                   int(self.height_entry.get()))
-            success, img_path, title = process.run_bf_matcher()
-            self.add_graph_button(success, img_path, title)
+            success, img_path, title, x, y = process.run_bf_matcher()
+            self.add_graph_button(success, img_path, title, x, y)
         self.enable_selections()
 
-    def add_graph_button(self, success, img_path, title):
+    def add_graph_button(self, success, img_path, title, x, y):
         if success and not self.already_added_graph:
             self.already_added_graph = True
             self.add_graph()
         if success and title not in self.output_images.keys():
             self.output_images[title] = img_path
+            self.output_x[title] = x
+            self.output_y[title] = y
             self.add_button(title)
 
     def add_graph(self):
@@ -327,6 +341,36 @@ class GUI:
 
         add_open = tk.Button(self.root, text="Open Output Folder", command=open_directory)
         add_open.pack()
+
+        add_get_graph = tk.Button(self.root, text="Combined Graph", command=self.gen_graph)
+        add_get_graph.pack()
+
+    def gen_graph(self):
+        file_name = "Combined"
+        usl = int(self.limit_entry.get()) / 1000
+        lsl = -int(self.limit_entry.get()) / 1000
+
+        # %% Figure
+        fig1 = plt.figure()
+        fig1.set_figwidth(30)
+        fig1.set_figheight(15)
+        plt.title("X and Y Offset")
+        for title in self.output_x.keys():
+            file_name = file_name + " - " + title
+            plt.plot(self.output_x[title], label="X Data for "+title)
+            plt.plot(self.output_y[title], label="Y Data for "+title)
+
+        plt.axhline(y=usl, color='r', linestyle='-', label="Control Limits")
+        plt.axhline(y=lsl, color='r', linestyle='-')
+
+        plt.title("Combined Repeatability data")
+        plt.xlabel("Iterations")
+        plt.ylabel("Deviation in mm")
+        plt.legend(loc="upper right")
+
+        fig_path = file_name + '.png'
+        plt.savefig(fig_path, dpi=100)
+        plt.show()
 
     def add_button(self, title):
         add_image_button = tk.Button(self.image_button_frame, text=title,

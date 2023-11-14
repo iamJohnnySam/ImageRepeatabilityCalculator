@@ -90,4 +90,4 @@ class AutoMatcher:
         y_img = self.y_arr * self.img_h_mm / img_h_spx
 
         success, path, = grapher.grapher(x_img, y_img, self.limit, self.directory, "_bf")
-        return success, path, os.path.basename(self.directory) + "_bf"
+        return success, path, os.path.basename(self.directory) + "_bf", None, None

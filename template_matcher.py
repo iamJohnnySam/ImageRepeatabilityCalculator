@@ -106,7 +106,7 @@ class TemplateMatcher:
         self.y_arr = self.y_arr - np.mean(self.y_arr)
 
         success, path, = grapher.grapher(self.x_arr, self.y_arr, self.limit, self.directory, "_tm")
-        return success, path, os.path.basename(self.directory) + "_tm"
+        return success, path, os.path.basename(self.directory) + "_tm", None, None
 
     def mouse_crop(self, event, x, y, flags, param):
 
