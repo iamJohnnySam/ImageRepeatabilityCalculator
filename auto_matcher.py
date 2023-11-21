@@ -54,6 +54,7 @@ class AutoMatcher:
         self.img_h_px = int(img_h_px)
         self.img_w_mm = float(img_w_mm)
         self.img_h_mm = float(img_h_mm)
+        self.physical_coordinates = {}
 
     def run_bf_matcher(self):
         reference_image = None
@@ -77,17 +78,16 @@ class AutoMatcher:
                     if result is not None:
                         x_offset, y_offset = result
                         print(x_offset, y_offset)
-                        self.x_arr = np.append(self.x_arr, x_offset)
-                        self.y_arr = np.append(self.y_arr, y_offset)
+                        x = x_offset * self.img_w_mm / (self.img_w_px * self.h / self.img_h_px)
+                        y = y_offset * self.img_h_mm / self.img_h_px
+                        self.x_arr = np.append(self.x_arr, x)
+                        self.y_arr = np.append(self.y_arr, y)
+                        self.physical_coordinates[filename] = [x, y]
+                    else:
+                        return False, "", "", {}
 
         self.x_arr = np.delete(self.x_arr, 0)
         self.y_arr = np.delete(self.y_arr, 0)
 
-        img_w_spx = self.img_w_px * self.h / self.img_h_px
-        img_h_spx = self.img_h_px
-
-        x_img = self.x_arr * self.img_w_mm / img_w_spx
-        y_img = self.y_arr * self.img_h_mm / img_h_spx
-
-        success, path, = grapher.grapher(x_img, y_img, self.limit, self.directory, "_bf")
-        return success, path, os.path.basename(self.directory) + "_bf", None, None
+        success, path, = grapher.grapher(self.x_arr, self.y_arr, self.limit, self.directory, "_bf")
+        return success, path, os.path.basename(self.directory) + "_bf", self.physical_coordinates

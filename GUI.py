@@ -7,6 +7,7 @@ import numpy as np
 from PIL import Image, ImageTk
 from matplotlib import pyplot as plt
 
+import grapher
 from Clicker import Clicker
 import subprocess
 from functools import partial
@@ -346,31 +347,7 @@ class GUI:
         add_get_graph.pack()
 
     def gen_graph(self):
-        file_name = "Combined"
-        usl = int(self.limit_entry.get()) / 1000
-        lsl = -int(self.limit_entry.get()) / 1000
-
-        # %% Figure
-        fig1 = plt.figure()
-        fig1.set_figwidth(30)
-        fig1.set_figheight(15)
-        plt.title("X and Y Offset")
-        for title in self.output_x.keys():
-            file_name = file_name + " - " + title
-            plt.plot(self.output_x[title], label="X Data for "+title)
-            plt.plot(self.output_y[title], label="Y Data for "+title)
-
-        plt.axhline(y=usl, color='r', linestyle='-', label="Control Limits")
-        plt.axhline(y=lsl, color='r', linestyle='-')
-
-        plt.title("Combined Repeatability data")
-        plt.xlabel("Iterations")
-        plt.ylabel("Deviation in mm")
-        plt.legend(loc="upper right")
-
-        fig_path = file_name + '.png'
-        plt.savefig(fig_path, dpi=100)
-        plt.show()
+        grapher.combined_grapher(int(self.limit_entry.get()), self.output_x, self.output_y)
 
     def add_button(self, title):
         add_image_button = tk.Button(self.image_button_frame, text=title,
