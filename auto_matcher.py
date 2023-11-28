@@ -89,5 +89,5 @@ class AutoMatcher:
         self.x_arr = np.delete(self.x_arr, 0)
         self.y_arr = np.delete(self.y_arr, 0)
 
-        success, path, = grapher.grapher(self.x_arr, self.y_arr, self.limit, self.directory, "_bf")
+        success, path = grapher.grapher(self.x_arr, self.y_arr, self.limit, self.directory, "_bf")
         return success, path, os.path.basename(self.directory) + "_bf", self.physical_coordinates

@@ -9,7 +9,6 @@ class Clicker:
     x_arr = []
     y_arr = []
     click_coordinates = {}
-    physical_coordinates = {}
 
     def __init__(self, directory, img_w_px, img_h_px, img_w_mm, img_h_mm, limit=150, window_size=1700):
         self.filename = "None"
@@ -20,18 +19,24 @@ class Clicker:
         self.img_h_px = int(img_h_px)
         self.img_w_mm = float(img_w_mm)
         self.img_h_mm = float(img_h_mm)
-
+        self.physical_coordinates = {}
 
     def mouse_callback(self, event, x, y, a, b):
         if event == cv.EVENT_LBUTTONUP:
             print("Mouse clicked at X:", x, "Y:", y)
             self.click_coordinates[self.filename] = [x, y]
 
-            self.x_arr.append(x * self.img_w_mm / (self.img_w_px * self.h / self.img_h_px))
-            self.y_arr.append(y * self.img_h_mm / self.img_h_px)
-            self.physical_coordinates[self.filename] = [x, y]
+            x_adj = x * self.img_w_mm / (self.img_w_px * self.h / self.img_h_px)
+            y_adj = y * self.img_h_mm / self.img_h_px
+
+            self.x_arr.append(x_adj)
+            self.y_arr.append(y_adj)
+            self.physical_coordinates[self.filename] = [x_adj, y_adj]
 
     def run_clicker(self):
+        self.physical_coordinates = {}
+        self.x_arr = []
+        self.y_arr = []
         for filename in os.listdir(self.directory):
             f = os.path.join(self.directory, filename).replace("\\", "/")
             if os.path.isfile(f):
@@ -48,7 +53,7 @@ class Clicker:
                 cv.destroyAllWindows()
 
         json_object = json.dumps(self.click_coordinates, indent=4)
-        with open(os.path.basename(self.directory) + ".json", "w") as outfile:
+        with open(os.path.basename(self.directory) + "_click_coordinates.json", "w") as outfile:
             outfile.write(json_object)
 
         if len(self.x_arr) == 0:
@@ -66,5 +71,6 @@ class Clicker:
         except ValueError:
             return False, "", "", {}
 
-        success, path, = grapher.grapher(x_set, y_set, self.limit, self.directory, "_c")
+        success, path = grapher.grapher(x_set, y_set, self.limit, self.directory, "_c")
+
         return success, path, os.path.basename(self.directory) + "_c", self.physical_coordinates

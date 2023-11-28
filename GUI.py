@@ -2,11 +2,7 @@ import os
 import tkinter as tk
 from tkinter import filedialog
 from tkinter import PhotoImage
-
-import numpy as np
 from PIL import Image, ImageTk
-from matplotlib import pyplot as plt
-
 import grapher
 from Clicker import Clicker
 import subprocess
@@ -34,10 +30,13 @@ def on_validate(p):
 
 class GUI:
     output_images = {}
-    output_x = {}
-    output_y = {}
+    output_coordinates = {}
+
+    checked_images = []
 
     def __init__(self):
+        self.checkbox_frame = None
+        self.right_frame = None
         self.start_tm_auto_button = None
         self.already_added_content = False
         self.image_button_frame = None
@@ -86,6 +85,9 @@ class GUI:
 
         gap_label = tk.Label(self.root, text="")
         gap_label.pack()
+
+        self.graph_type = tk.StringVar()
+        self.graph_type.set("line")
 
     def show_info_popup(self, msg):
         info_popup = tk.Toplevel(self.root)
@@ -196,6 +198,26 @@ class GUI:
                                               width=20, state=tk.DISABLED)
         self.start_tm_auto_button.pack(side=tk.LEFT)
 
+        grapher_frame = tk.Frame(self.root)
+        grapher_frame.pack()
+
+        left_frame = tk.Frame(grapher_frame)
+        left_frame.pack(side=tk.LEFT, padx=10, pady=10)
+
+        self.right_frame = tk.Frame(grapher_frame)
+        self.right_frame.pack(side=tk.LEFT, padx=10, pady=10)
+
+        graph_type_frame = tk.Frame(left_frame)
+        graph_type_frame.pack()
+
+        radio_line = tk.Radiobutton(graph_type_frame, text="line", variable=self.graph_type, value="line", width=10)
+        radio_line.pack(side=tk.LEFT)
+        radio_scatter = tk.Radiobutton(graph_type_frame, text="scatter", variable=self.graph_type, value="scatter", width=10)
+        radio_scatter.pack(side=tk.LEFT)
+
+        self.checkbox_frame = tk.Frame(left_frame)
+        self.checkbox_frame.pack()
+
     def camera_selection_custom(self):
         self.x_px.config(state=tk.NORMAL)
         self.y_px.config(state=tk.NORMAL)
@@ -281,8 +303,8 @@ class GUI:
                               self.y_mm.get(),
                               int(self.limit_entry.get()),
                               int(self.height_entry.get()))
-            success, img_path, title, x, y = process.run_clicker()
-            self.add_graph_button(success, img_path, title, x, y)
+            success, img_path, title, coordinates = process.run_clicker()
+            self.add_graph_button(success, img_path, title, coordinates)
         self.enable_selections()
 
     def start_tm_auto(self):
@@ -300,8 +322,8 @@ class GUI:
                                       self.y_mm.get(),
                                       int(self.limit_entry.get()),
                                       int(self.height_entry.get()))
-            success, img_path, title, x, y = process.run_matcher()
-            self.add_graph_button(success, img_path, title, x, y)
+            success, img_path, title, coordinates = process.run_matcher()
+            self.add_graph_button(success, img_path, title, coordinates)
         self.enable_selections()
 
     def start_auto(self):
@@ -317,45 +339,68 @@ class GUI:
                                   self.y_mm.get(),
                                   int(self.limit_entry.get()),
                                   int(self.height_entry.get()))
-            success, img_path, title, x, y = process.run_bf_matcher()
-            self.add_graph_button(success, img_path, title, x, y)
+            success, img_path, title, coordinates = process.run_bf_matcher()
+            self.add_graph_button(success, img_path, title, coordinates)
         self.enable_selections()
 
-    def add_graph_button(self, success, img_path, title, x, y):
+    def add_graph_button(self, success, img_path, title, coordinates):
         if success and not self.already_added_graph:
             self.already_added_graph = True
             self.add_graph()
+
         if success and title not in self.output_images.keys():
             self.output_images[title] = img_path
-            self.output_x[title] = x
-            self.output_y[title] = y
+            self.output_coordinates[title] = coordinates
             self.add_button(title)
 
     def add_graph(self):
         image_placeholder = PhotoImage()
         image_placeholder = image_placeholder.subsample(2, 3)
-        self.image_label = tk.Label(self.root, image=image_placeholder)
+        self.image_label = tk.Label(self.right_frame, image=image_placeholder)
         self.image_label.pack()
 
-        self.image_button_frame = tk.Frame(self.root, width=750)
+        self.image_button_frame = tk.Frame(self.checkbox_frame, width=750)
         self.image_button_frame.pack()
 
         add_open = tk.Button(self.root, text="Open Output Folder", command=open_directory)
         add_open.pack()
 
-        add_get_graph = tk.Button(self.root, text="Combined Graph", command=self.gen_graph)
-        add_get_graph.pack()
-
-    def gen_graph(self):
-        grapher.combined_grapher(int(self.limit_entry.get()), self.output_x, self.output_y)
-
     def add_button(self, title):
-        add_image_button = tk.Button(self.image_button_frame, text=title,
-                                     command=partial(self.add_placeholder_image, title))
-        add_image_button.pack(side=tk.LEFT)
+        add_image_button = tk.Checkbutton(self.image_button_frame, text=title, variable=title,
+                                          command=partial(self.checked_box, title))
+        add_image_button.pack()
+
+    def checked_box(self, title):
+        if title in self.checked_images:
+            self.checked_images.remove(title)
+        else:
+            self.checked_images.append(title)
+
+        if len(self.checked_images) == 1:
+            self.add_placeholder_image(self.checked_images[0])
+        elif len(self.checked_images) > 1:
+            self.checked_images.sort()
+            print(self.checked_images)
+            c_title = ""
+            f_val = 0
+            for val in self.checked_images:
+                if f_val != 0:
+                    c_title = c_title + ", "
+                f_val = f_val + 1
+                c_title = c_title + val
+            if c_title in self.output_images:
+                self.add_placeholder_image(c_title)
+            else:
+                plot_values = {}
+                for a in self.checked_images:
+                    plot_values[a] = self.output_coordinates[a]
+                file = grapher.combined_grapher(int(self.limit_entry.get()), plot_values, c_title)
+                self.output_images[c_title] = file
+                self.add_placeholder_image(c_title)
 
     def add_placeholder_image(self, title):
-        image_path = self.output_images[title]
+        image_path = self.output_images[title][self.graph_type.get()]
+        print("Showing ", self.output_images[title])
         if image_path:
             self.resize_and_display_image(image_path)
 

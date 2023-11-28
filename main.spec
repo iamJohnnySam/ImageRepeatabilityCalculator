@@ -21,7 +21,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='ImageRepeatabilityCalculator v1.5',
+    name='ImageRepeatabilityCalculator v1.6',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
