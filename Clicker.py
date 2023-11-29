@@ -6,11 +6,11 @@ import grapher
 
 
 class Clicker:
-    x_arr = []
-    y_arr = []
-    click_coordinates = {}
 
     def __init__(self, directory, img_w_px, img_h_px, img_w_mm, img_h_mm, limit=150, window_size=1700):
+        self.x_arr = []
+        self.y_arr = []
+        self.click_coordinates = {}
         self.filename = "None"
         self.directory = directory
         self.h = window_size

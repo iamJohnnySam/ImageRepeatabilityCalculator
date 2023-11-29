@@ -6,18 +6,14 @@ import grapher
 
 
 class TemplateMatcher:
-    reference_center_x = 0
-    reference_center_y = 0
-    ref_image_take = False
-    x_arr = np.array([0])
-    y_arr = np.array([0])
-    template_w = 0
-    template_h = 0
-    cropped = False
-
-    x_start, y_start, x_end, y_end = 0, 0, 0, 0
-
     def __init__(self, directory, img_w_px, img_h_px, img_w_mm, img_h_mm, limit=150, window_size=1700):
+        self.reference_center_x, self.reference_center_y = 0, 0
+        self.ref_image_take = False
+        self.x_arr = np.array([0])
+        self.y_arr = np.array([0])
+        self.template_w = self.template_h = 0, 0
+        self.cropped = False
+        self.x_start, self.y_start, self.x_end, self.y_end = 0, 0, 0, 0
         self.w = None
         self.reference_image_w = None
         self.reference_image_h = None

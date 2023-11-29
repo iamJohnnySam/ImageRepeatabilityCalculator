@@ -29,33 +29,32 @@ def on_validate(p):
 
 
 class GUI:
-    output_images = {}
-    output_coordinates = {}
-
-    checked_images = []
+    checkbox_frame = None
+    right_frame = None
+    start_tm_auto_button = None
+    image_button_frame = None
+    camera_custom = None
+    start_auto_button = None
+    image_label = None
+    image_placeholder = None
+    camera_cognex = None
+    camera_basler = None
 
     def __init__(self):
-        self.checkbox_frame = None
-        self.right_frame = None
-        self.start_tm_auto_button = None
+        self.output_images = {}
+        self.output_coordinates = {}
+        self.checked_images = []
         self.already_added_content = False
-        self.image_button_frame = None
         self.x_px = None
         self.y_px = None
         self.x_mm = None
         self.y_mm = None
-        self.camera_custom = None
         self.already_added_graph = False
-        self.start_auto_button = None
-        self.image_label = None
-        self.image_placeholder = None
         self.img_path = None
         self.height_entry = None
         self.path = None
         self.start_clicker_button = None
         self.limit_entry = None
-        self.camera_cognex = None
-        self.camera_basler = None
         self.root = tk.Tk()
         self.root.title("Image Repeatability Calculator")
         self.root.geometry("950x800")  # Set the window size

@@ -42,11 +42,11 @@ def calculate_offset(reference, image):
 
 
 class AutoMatcher:
-    ref_image_take = False
-    x_arr = np.array([0])
-    y_arr = np.array([0])
 
     def __init__(self, directory, img_w_px, img_h_px, img_w_mm, img_h_mm, limit=150, window_size=1700):
+        self.ref_image_take = False
+        self.x_arr = np.array([0])
+        self.y_arr = np.array([0])
         self.directory = directory
         self.h = window_size
         self.limit = limit
