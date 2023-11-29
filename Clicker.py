@@ -23,11 +23,12 @@ class Clicker:
 
     def mouse_callback(self, event, x, y, a, b):
         if event == cv.EVENT_LBUTTONUP:
-            print("Mouse clicked at X:", x, "Y:", y)
             self.click_coordinates[self.filename] = [x, y]
 
             x_adj = x * self.img_w_mm / (self.img_w_px * self.h / self.img_h_px)
             y_adj = y * self.img_h_mm / self.img_h_px
+
+            print("Mouse clicked at X:", x + " (" + str(x_adj) + "mm)", "Y:", y + " (" + str(y_adj) + "mm)")
 
             self.x_arr.append(x_adj)
             self.y_arr.append(y_adj)
@@ -54,6 +55,10 @@ class Clicker:
 
         json_object = json.dumps(self.click_coordinates, indent=4)
         with open(os.path.basename(self.directory) + "_click_coordinates.json", "w") as outfile:
+            outfile.write(json_object)
+
+        json_object = json.dumps(self.physical_coordinates, indent=4)
+        with open(os.path.basename(self.directory) + "_physical_coordinates.json", "w") as outfile:
             outfile.write(json_object)
 
         if len(self.x_arr) == 0:
