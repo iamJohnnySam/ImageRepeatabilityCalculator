@@ -28,7 +28,7 @@ class Clicker:
             x_adj = x * self.img_w_mm / (self.img_w_px * self.h / self.img_h_px)
             y_adj = y * self.img_h_mm / self.img_h_px
 
-            print("Mouse clicked at X:", x + " (" + str(x_adj) + "mm)", "Y:", y + " (" + str(y_adj) + "mm)")
+            print("Mouse clicked at X:", str(x) + " (" + str(x_adj) + "mm)", "Y:", str(y) + " (" + str(y_adj) + "mm)")
 
             self.x_arr.append(x_adj)
             self.y_arr.append(y_adj)

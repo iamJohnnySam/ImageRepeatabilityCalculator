@@ -1,0 +1,62 @@
+\setlength{\cftsecnumwidth}{3em} % adjust this value to your needs
+\setlength{\cftsubsecnumwidth}{4em} % adjust this value to your needs
+\setlength{\cftsubsubsecnumwidth}{4em} % adjust this value to your needs
+
+\backgroundsetup{
+	contents={\Huge\textcolor{white}{DRAFT}},
+	angle=45,
+	scale=5,
+	opacity=0.2,
+	position={current page.center}
+}
+
+% color definitions
+\definecolor{lightblue1}{RGB}{91,146,229} 
+\definecolor{lightblue}{RGB}{142,183,247}
+\definecolor{myblue}{RGB}{54,95,145}
+\definecolor{myblue2}{RGB}{107,142,185}
+
+\definecolor{myblue0}{RGB}{0, 102, 204} % define the color
+\renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}} % set dotted lines for sections
+\renewcommand{\cftsecfont}{\color{black}} % set the color of section titles
+\renewcommand{\cftsubsecleader}{\cftdotfill{\cftdotsep}} % set dotted lines for subsections
+\renewcommand{\cftsubsecfont}{\color{black}} % set the color of subsection titles
+\renewcommand{\cftsubsubsecleader}{\cftdotfill{\cftdotsep}} % set dotted lines for subsubsections
+\renewcommand{\cftsubsubsecfont}{\color{black}} % set the color of subsubsection titles
+\renewcommand{\contentsname}{\centering\LARGE Contents} % redefine the title "Contents" with centering and large font
+
+%Setting up fonts for headings and body
+\usepackage{fontspec}
+\setmainfont{Calibri}
+\usepackage{titlesec}
+\newfontfamily\headingfont{Cambria}
+\titleformat*{\section}{\Large\headingfont\bfseries\color{myblue}}
+\titleformat*{\subsection}{\large\headingfont\bfseries\color{myblue}}
+\titleformat*{\subsubsection}{\normalsize\headingfont\bfseries\color{myblue}}
+
+	
+%setting up documents margins
+\usepackage[margin=1in, headsep=0.5in, bottom=1.4in]{geometry}
+	
+% Designing the header of the document
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\includegraphics[width=1.6cm]{RESOURCES/logo.png}}
+\rhead{\centering\color{black!80}\fontsize{9}{11}
+	\selectfont 7 Gambas Crescent, \#08-24, Singapore, 757087. P: +65 6983 8172 \quad E: info@mindoxtechno.com}
+%\renewcommand{\headrule}{\color{lightblue}\hrule height \headrulewidth }
+\renewcommand{\headrulewidth}{0.4pt}
+\setlength{\headsep}{1.0in}
+	
+\renewcommand{\footrulewidth}{0.4pt}
+\fancyfoot[L]{\color{black!80}\fontsize{9}{11}\selectfont Mindox Techno Pte., Ltd. }
+\fancyfoot[C]{\color{black!80}\fontsize{9}{11}\selectfont Confidential}
+\fancyfoot[R]{\color{black!80}\fontsize{9}{11}\selectfont \thepage}
+\fontsize{10}{12}\selectfont % Increase font size to 10pt and line spacing to 12pt
+\linespread{1.2} % Increase line spacing by 20%
+
+\hypersetup{
+    colorlinks=false,
+    linkbordercolor=white, % Set the color of the link border to white
+    pdfborderstyle={/S/U/W 1}, % Remove the border around links
+}

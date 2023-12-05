@@ -8,7 +8,10 @@ from Clicker import Clicker
 import subprocess
 from functools import partial
 from auto_matcher import AutoMatcher
+from documenter import Documenter
+from kri_log_decoder import KRILogDecoder
 from template_matcher import TemplateMatcher
+from tkinter import messagebox
 
 
 def open_directory():
@@ -35,10 +38,12 @@ class GUI:
     image_button_frame = None
     camera_custom = None
     start_auto_button = None
+    start_kri_auto_button = None
     image_label = None
     image_placeholder = None
     camera_cognex = None
     camera_basler = None
+    btn_gen_report = None
 
     def __init__(self):
         self.output_images = {}
@@ -114,6 +119,7 @@ class GUI:
             self.start_clicker_button.config(state=tk.NORMAL)
             self.start_auto_button.config(state=tk.NORMAL)
             self.start_tm_auto_button.config(state=tk.NORMAL)
+            self.start_kri_auto_button.config(state=tk.NORMAL)
 
     def add_camera_selection(self):
         camera_frame = tk.Frame(self.root)
@@ -184,18 +190,24 @@ class GUI:
         self.height_entry.insert(0, "1700")
         self.height_entry.pack(side=tk.LEFT)
 
+        gap_label = tk.Label(self.root, text="")
+        gap_label.pack()
+
         button_frame = tk.Frame(self.root)
         button_frame.pack()
 
-        self.start_clicker_button = tk.Button(button_frame, text="Start Manual Clicker", command=self.start_clicker,
-                                              width=20, state=tk.DISABLED)
+        self.start_clicker_button = tk.Button(button_frame, text="Manual Clicker", command=self.start_clicker,
+                                              width=20, state=tk.DISABLED, padx=5, pady=5)
         self.start_clicker_button.pack(side=tk.LEFT)
-        self.start_auto_button = tk.Button(button_frame, text="Start BF Matcher", command=self.start_auto,
-                                           width=20, state=tk.DISABLED)
+        self.start_auto_button = tk.Button(button_frame, text="BF Matcher", command=self.start_auto,
+                                           width=20, state=tk.DISABLED, padx=5, pady=5)
         self.start_auto_button.pack(side=tk.LEFT)
-        self.start_tm_auto_button = tk.Button(button_frame, text="Start Template Matcher", command=self.start_tm_auto,
-                                              width=20, state=tk.DISABLED)
+        self.start_tm_auto_button = tk.Button(button_frame, text="Template Matcher", command=self.start_tm_auto,
+                                              width=20, state=tk.DISABLED, padx=5, pady=5)
         self.start_tm_auto_button.pack(side=tk.LEFT)
+        self.start_kri_auto_button = tk.Button(button_frame, text="KRI Log File", command=self.start_kri_log,
+                                               width=20, state=tk.DISABLED, padx=5, pady=5)
+        self.start_kri_auto_button.pack(side=tk.LEFT)
 
         grapher_frame = tk.Frame(self.root)
         grapher_frame.pack()
@@ -211,7 +223,8 @@ class GUI:
 
         radio_line = tk.Radiobutton(graph_type_frame, text="line", variable=self.graph_type, value="line", width=10)
         radio_line.pack(side=tk.LEFT)
-        radio_scatter = tk.Radiobutton(graph_type_frame, text="scatter", variable=self.graph_type, value="scatter", width=10)
+        radio_scatter = tk.Radiobutton(graph_type_frame, text="scatter", variable=self.graph_type,
+                                       value="scatter", width=10)
         radio_scatter.pack(side=tk.LEFT)
 
         self.checkbox_frame = tk.Frame(left_frame)
@@ -275,6 +288,10 @@ class GUI:
         self.y_px.config(state=tk.DISABLED)
         self.x_mm.config(state=tk.DISABLED)
         self.y_mm.config(state=tk.DISABLED)
+        self.start_tm_auto_button.config(state="disabled")
+        self.start_auto_button.config(state="disabled")
+        self.start_kri_auto_button.config(state="disabled")
+        self.start_clicker_button.config(state="disabled")
 
     def enable_selections(self):
         self.camera_cognex.config(state="normal")
@@ -287,6 +304,10 @@ class GUI:
             self.y_px.config(state=tk.NORMAL)
             self.x_mm.config(state=tk.NORMAL)
             self.y_mm.config(state=tk.NORMAL)
+        self.start_tm_auto_button.config(state="normal")
+        self.start_auto_button.config(state="normal")
+        self.start_kri_auto_button.config(state="normal")
+        self.start_clicker_button.config(state="normal")
 
     def start_clicker(self):
         self.disable_selections()
@@ -342,6 +363,21 @@ class GUI:
             self.add_graph_button(success, img_path, title, coordinates)
         self.enable_selections()
 
+    def start_kri_log(self):
+        self.disable_selections()
+        msg = "Select KRI Log file for cycling."
+        self.show_info_popup(msg)
+
+        folder_path = filedialog.askopenfile(title='Select KRI file', filetypes=(("text files", "*.txt"),
+                                                                                 ("all files", "*.*")))
+        if folder_path:
+            print(folder_path)
+            process = KRILogDecoder(folder_path)
+            success, img_path, title, coordinates = process.run_decoder()
+            self.add_graph_button(success, img_path, title, coordinates)
+
+        self.enable_selections()
+
     def add_graph_button(self, success, img_path, title, coordinates):
         if success and not self.already_added_graph:
             self.already_added_graph = True
@@ -363,6 +399,47 @@ class GUI:
 
         add_open = tk.Button(self.root, text="Open Output Folder", command=open_directory)
         add_open.pack()
+
+        gap_label = tk.Label(self.root, text="")
+        gap_label.pack()
+
+        self.btn_gen_report = tk.Button(self.root, text="Generate Report", command=self.generate_report)
+        self.btn_gen_report.pack()
+        self.btn_gen_report.config(state=tk.DISABLED)
+
+    def generate_report(self):
+        form_window = tk.Toplevel(self.root)
+        form_window.title("Document Details")
+        form_window.geometry("400x200")  # Set the window size
+
+        heading_label = tk.Label(form_window, text="Generate Report", font=("Helvetica", 16))
+        heading_label.pack()
+
+        gap_label = tk.Label(form_window, text="")
+        gap_label.pack()
+
+        def submit_form():
+            messagebox.showinfo("Feature in Development")
+            doc = Documenter(name_entry.get(), author_entry.get())
+            doc.create_document()
+            form_window.destroy()
+
+        name_label = tk.Label(form_window, text="Device Serial Number:")
+        name_label.pack()
+
+        name_entry = tk.Entry(form_window)
+        name_entry.pack()
+        name_entry.insert(0, "90-SR23xxx-18-xx")
+
+        author_label = tk.Label(form_window, text="Document Author:")
+        author_label.pack()
+
+        author_entry = tk.Entry(form_window)
+        author_entry.pack()
+        author_entry.insert(0, os.getlogin())
+
+        submit_button = tk.Button(form_window, text="Submit", command=submit_form)
+        submit_button.pack()
 
     def add_button(self, title):
         add_image_button = tk.Checkbutton(self.image_button_frame, text=title, variable=title,
@@ -396,6 +473,11 @@ class GUI:
                 file = grapher.combined_grapher(int(self.limit_entry.get()), plot_values, c_title)
                 self.output_images[c_title] = file
                 self.add_placeholder_image(c_title)
+
+        if len(self.checked_images) > 0:
+            self.btn_gen_report.config(state=tk.NORMAL)
+        else:
+            self.btn_gen_report.config(state=tk.DISABLED)
 
     def add_placeholder_image(self, title):
         image_path = self.output_images[title][self.graph_type.get()]
