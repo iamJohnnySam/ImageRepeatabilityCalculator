@@ -365,14 +365,12 @@ class GUI:
 
     def start_kri_log(self):
         self.disable_selections()
-        msg = "Select KRI Log file for cycling."
-        self.show_info_popup(msg)
+        # msg = "Select KRI Log file for cycling."
+        # self.show_info_popup(msg)
 
-        folder_path = filedialog.askopenfile(title='Select KRI file', filetypes=(("text files", "*.txt"),
-                                                                                 ("all files", "*.*")))
+        folder_path = filedialog.askopenfile(title='Select KRI file', filetypes=[("Log files", "*.log")])
         if folder_path:
-            print(folder_path)
-            process = KRILogDecoder(folder_path)
+            process = KRILogDecoder(folder_path, int(self.limit_entry.get()))
             success, img_path, title, coordinates = process.run_decoder()
             self.add_graph_button(success, img_path, title, coordinates)
 
